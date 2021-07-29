@@ -49,7 +49,38 @@ function initParams()
  * Affichage du slider
  **/
 
-function showSlider()
+function showSlider($limit = 8)    // limite de 8 images
 {
-	echo 'Mon Top Slider';
+
+	// On importe le javascript (proprement)
+	wp_deregister_script('jquery');
+	wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js', null, '1.7.2', true);
+	wp_enqueue_script('caroufredsel', plugins_url() . '/TopSlider/js/jquery.carouFredSel-5.6.4-packed.js', array('jquery'), '5.6.4', true);
+	add_action('wp_footer', 'showJS', 30);
+
+	// On écrit le code HTML
+	$slides = new WP_query("post_type=slide&posts_per_page=$limit"); // classe wordpress pour récuperer les données du slides  
+	echo '<div id="TopSlider">';
+	while ($slides->have_posts()) {     // loop dans les post (wordpress)
+		$slides->the_post(); // start le loop
+		global $post;  // récupère les infos du slider
+		echo '<a style="display:block; float:left; height:400px;" href="' . esc_attr(get_post_meta($post->ID, '_link', true)) . '">';
+		the_post_thumbnail('slider', array('style' => 'width:800px!important;'));  // récupère l'image 
+		echo '</a>';
+	}
+	echo '</div>';
+}
+
+/**
+ * Affiche le code Javascript pour lancer caroufredsel
+ **/
+function showJS()
+{
+?>
+	<script type="text/javascript">
+		(function($) {
+			$('#TopSlider').caroufredsel();
+		})(jQuery);
+	</script>
+<?php
 }
