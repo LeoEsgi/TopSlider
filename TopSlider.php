@@ -8,7 +8,8 @@ Author: Léo Jehane Saoussene et Nicolas
 
 
 add_action('init', 'initParams');	// Initialisation de Wordpress
-
+add_action('add_meta_boxes', 'topSlider_metaboxes');
+add_action('save_post', 'topSlider_save',10, 2);					// pour la sauvegarde
 
 /**
  * Initialise les paramêtres du plugin
@@ -44,6 +45,55 @@ function initParams()
 	add_image_size('slider', 800, 200, true); // Enregistre une nouvelle taille d'image
 
 }
+/**
+ *  Gere les metabox
+ **/
+function topSlider_metaboxes()
+{
+
+	add_meta_box('topSlider', 'Lien Url Image', 'topSlider_metabox', 'slide', 'normal', 'high');
+}
+
+/**
+ * Metabox Lien 
+ **/
+function topSlider_metabox($object)
+{
+	// On génère un token (SECURITE)
+	wp_nonce_field('topslider', 'topSlider_token');  // methode wordpress de génération de token
+?>
+	<div class="meta-box-item-title">
+		<h4>Lien url du slide</h4>
+	</div>
+	<div class="meta-box-item-content">
+		<input type="text" name="topSlider_link" style="width:100%;" value="<?= esc_attr(get_post_meta($object->ID, '_link', true)); ?>">
+	</div>
+<?php
+}
+
+/**
+ * Gestion de la sauvegarde d'un slider (pour la metabox)
+ * @param int $post_id Id du contenu édité
+ * @param object $post contenu édité
+ **/
+
+function topSlider_save($post_id, $post)
+{
+	// verifie que le champ lien est rempli et que le token est bon
+	if (!isset($_POST['topSlider_link']) || !wp_verify_nonce($_POST['topSlider_token'], 'topslider')) {
+		return $post_id;
+	}
+
+
+	$type = get_post_type_object($post->post_type);
+	// L'utilisateur a le droit ?
+	if (!current_user_can($type->cap->edit_post)) {
+		return $post_id;
+	}
+
+	// On met à jour la meta !
+	update_post_meta($post_id, '_link', $_POST['topSlider_link']);
+}
 
 /** 
  * Affichage du slider
@@ -65,7 +115,7 @@ function showSlider($limit = 8)    // limite de 8 images
 		$slides->the_post(); // start le loop
 		global $post;  // récupère les infos du slider
 		echo '<a style="display:block; float:left; height:400px;" href="' . esc_attr(get_post_meta($post->ID, '_link', true)) . '">';
-		the_post_thumbnail('slider', array('style' => 'width:800px!important;'));  // récupère l'image 
+		the_post_thumbnail('slider', array('style' => 'width:800px!important;'));  // résoud le bug d'affichage avec le theme twentyeleven
 		echo '</a>';
 	}
 	echo '</div>';
