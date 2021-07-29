@@ -10,6 +10,8 @@ Author: Léo Jehane Saoussene et Nicolas
 add_action('init', 'initParams');	// Initialisation de Wordpress
 add_action('add_meta_boxes', 'topSlider_metaboxes');
 add_action('save_post', 'topSlider_save',10, 2);					// pour la sauvegarde
+add_action('manage_edit-slide_columns', 'topSlider_filterColumn');		// Capture la liste des colonnes pour les slides
+add_action('manage_posts_custom_column', 'topSlider_column');			// Permet d'afficher du contenu en plus pour chaque column
 
 /**
  * Initialise les paramêtres du plugin
@@ -120,6 +122,29 @@ function showSlider($limit = 8)    // limite de 8 images
 	}
 	echo '</div>';
 }
+
+
+/**
+* Gestion des colonnes pour les slides
+* @param array $columns tableau associatif contenant les column $id => $name
+**/
+function topSlider_filterColumn($columns){
+	$thumb = array('thumbnail' => 'Image');
+	$columns = array_slice($columns, 0, 1) + $thumb + array_slice($columns,1,null);
+	return $columns;
+}
+
+/**
+* Gestion du contenu d'une colonne
+* @param String $column Id de la colonne traitée
+**/
+function topSlider_column($column){
+	global $post;
+	if($column == 'thumbnail'){
+		echo edit_post_link(get_the_post_thumbnail($post->ID),null,null,$post->ID);
+	}
+}
+
 
 /**
  * Affiche le code Javascript pour lancer caroufredsel
